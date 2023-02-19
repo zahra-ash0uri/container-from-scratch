@@ -26,25 +26,25 @@ func run() {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID | syscall.CLONE_NEWNS,
-		// Unshareflags: syscall.CLONE_NEWNS,
+		Cloneflags:   syscall.CLONE_NEWUTS | syscall.CLONE_NEWUSER | syscall.CLONE_NEWPID | syscall.CLONE_NEWNS,
+		Unshareflags: syscall.CLONE_NEWNS,
 	}
 	must(cmd.Run())
 }
 
 func fork() {
-	fmt.Printf("Fork - Running %v \n", os.Args[2:])
+	fmt.Printf("Running %v \n", os.Args[2:])
+	// defer fmt.Printf("\n %v \n", dmesg.ReadAll())
+	must(syscall.Sethostname([]byte("cfs")))
+
+	must(syscall.Chroot("/home/hasin/Documents/container-from-scratch"))
+	must(os.Chdir("/"))
+	must(syscall.Mount("/proc", "proc", "proc", 0, ""))
 
 	cmd := exec.Command(os.Args[2], os.Args[3:]...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
-	must(syscall.Sethostname([]byte("container")))
-	// chroot
-	must(syscall.Chroot("/home/hasin/Documents/container-from-scratch"))
-	must(os.Chdir("/"))
-	// must(syscall.Mount("proc", "proc", "proc", 0, ""))
 
 	must(cmd.Run())
 
